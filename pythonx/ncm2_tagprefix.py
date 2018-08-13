@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import vim
-from ncm2 import Ncm2Source
+from ncm2 import Ncm2Source, getLogger
 import re
 from os import path
 
+logger = getLogger(__name__)
 
 class Source(Ncm2Source):
 
