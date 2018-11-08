@@ -44,6 +44,24 @@ def binary_search_lines_by_prefix(prefix, filename):
 
     with open(filename, 'r') as f:
 
+        # Calculate sorting mode of tag file. If mode is 2 (foldcase), then when
+        # navigating the tags we need to ignore the case
+        foldcase = False
+        line0 = f.readline()
+        while line0.startswith('!'):
+            if line0.startswith('!_TAG_FILE_SORTED'):
+                sort_mode = int(line0.split('\t')[1])
+                if sort_mode == 1:
+                    pass
+                elif sort_mode == 2:
+                    foldcase = True
+                else:
+                    logger.exception('_TAG_FILE_SORTED=%d is not supported', sort_mode)
+                break
+            line0 = f.readline()
+
+        prefix_fc = prefix.lower() if foldcase else prefix
+
         def yield_results():
             while True:
                 line = f.readline()
@@ -83,7 +101,10 @@ def binary_search_lines_by_prefix(prefix, filename):
             if line2 != '':
                 key2 = line2[:len(prefix)]
 
-            if key1 >= prefix:
+            key1_fc = key1.lower() if foldcase else key1
+            key2_fc = key2.lower() if foldcase else key2
+
+            if key1_fc >= prefix_fc:
                 if line2pos < end:
                     end = line2pos
                 else:
@@ -100,13 +121,13 @@ def binary_search_lines_by_prefix(prefix, filename):
                             f.seek(line2pos, 0)
                             yield from yield_results()
                         return
-            elif key2 == prefix:
+            elif key2_fc == prefix_fc:
                 # find success
                 # key1 < prefix  && next line key2 == prefix
                 f.seek(line2pos, 0)
                 yield from yield_results()
                 return
-            elif key2 < prefix:
+            elif key2_fc < prefix_fc:
                 begin = line2end
                 # if begin==end, then exit the loop
             else:
